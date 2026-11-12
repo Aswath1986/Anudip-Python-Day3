@@ -1,0 +1,1020 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mutability Lab — Python objects, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --paper:#FFFFFF; --panel:#F2F6FA; --panel2:#E9EFF5; --line:#C9D5E0;
+  --ink:#16222E; --muted:#45586B;
+  --blue:#2B5B84; --blue-ink:#FFFFFF;
+  --amber:#8A5C00; --amber-bg:#FFF2CC; --amber-line:#E3C76E;
+  --good:#1F6E43; --good-bg:#E2F2E8;
+  --bad:#9B2C2C; --bad-bg:#FBE4E4;
+  --box:#FFFFFF; --box-line:#9FB4C6; --ghost:#8A98A6;
+  --code:#0E161F; --code-ink:#E8EEF4; --code-amber:#FFD166;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --paper:#10171E; --panel:#17212B; --panel2:#1D2935; --line:#2C3D4D;
+    --ink:#E7EDF3; --muted:#9FB0C0;
+    --blue:#6FA3D2; --blue-ink:#0E161F;
+    --amber:#E8BE5A; --amber-bg:#2A2410; --amber-line:#5C4D1E;
+    --good:#7CC89D; --good-bg:#15281E;
+    --bad:#E89090; --bad-bg:#2E1717;
+    --box:#141D26; --box-line:#3C5168; --ghost:#5E6E7E;
+    --code:#0B1218; --code-ink:#DCE6EF; --code-amber:#FFD166;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --paper:#10171E; --panel:#17212B; --panel2:#1D2935; --line:#2C3D4D;
+  --ink:#E7EDF3; --muted:#9FB0C0;
+  --blue:#6FA3D2; --blue-ink:#0E161F;
+  --amber:#E8BE5A; --amber-bg:#2A2410; --amber-line:#5C4D1E;
+  --good:#7CC89D; --good-bg:#15281E;
+  --bad:#E89090; --bad-bg:#2E1717;
+  --box:#141D26; --box-line:#3C5168; --ghost:#5E6E7E;
+  --code:#0B1218; --code-ink:#DCE6EF; --code-amber:#FFD166;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'Space Grotesk',system-ui,sans-serif; font-size:16px; line-height:1.5;
+}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.wrap{max-width:860px; margin:0 auto; padding:20px 16px 56px}
+header.site{padding:18px 0 6px}
+.kicker{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--blue); font-weight:600}
+h1{font-size:clamp(28px,6vw,40px); line-height:1.08; margin:4px 0 6px; letter-spacing:-0.5px}
+.sub{color:var(--muted); max-width:56ch; margin:0}
+.motto{
+  display:inline-block; margin-top:14px; font-family:'JetBrains Mono',monospace; font-weight:600;
+  font-size:14px; color:var(--code-amber); background:var(--code); border-radius:8px; padding:8px 14px;
+}
+section{margin-top:40px}
+h2{font-size:22px; margin:0 0 4px}
+.lede{color:var(--muted); margin:0 0 14px; max-width:60ch}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px}
+
+/* type chips */
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px}
+.chipgrp{font-size:13px; color:var(--muted); width:100%; margin-top:4px}
+button.chip{
+  font-family:'JetBrains Mono',monospace; font-size:14px; cursor:pointer;
+  padding:8px 13px; border-radius:99px; border:1.5px solid var(--line);
+  background:var(--paper); color:var(--ink); min-height:40px;
+}
+button.chip[aria-pressed="true"]{background:var(--blue); color:var(--blue-ink); border-color:var(--blue)}
+button.chip:focus-visible, button:focus-visible{outline:3px solid var(--blue); outline-offset:2px}
+
+/* stage */
+.stage{position:relative; display:flex; gap:28px; align-items:flex-start; margin-top:14px; min-height:150px}
+.namecol{flex:0 0 auto; position:sticky; top:12px; display:flex; flex-direction:column; gap:10px; padding-top:6px}
+.nametag{
+  font-family:'JetBrains Mono',monospace; font-weight:600; font-size:17px;
+  background:var(--amber-bg); color:var(--amber); border:1.5px solid var(--amber-line);
+  border-radius:8px; padding:7px 13px; text-align:center;
+}
+.nametag .nlabel{display:block; font-size:10.5px; font-weight:400; color:var(--muted); font-family:'Space Grotesk',sans-serif}
+.boxcol{flex:1 1 auto; display:flex; flex-direction:column; gap:12px; min-width:0}
+svg.wires{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible}
+svg.wires path{fill:none; stroke:var(--amber); stroke-width:2.5}
+svg.wires .wire-b{stroke:var(--blue)}
+svg.wires marker path{fill:var(--amber); stroke:none}
+svg.wires marker.mb path{fill:var(--blue)}
+.obox{
+  background:var(--box); border:1.8px solid var(--box-line); border-radius:10px; overflow:hidden;
+  transition:opacity .3s, border-color .3s;
+}
+.obox .ohead{
+  display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;
+  font-family:'JetBrains Mono',monospace; font-size:12.5px;
+  background:var(--panel2); color:var(--muted); padding:6px 11px; border-bottom:1px solid var(--line);
+}
+.obox .oval{font-family:'JetBrains Mono',monospace; font-size:16px; padding:11px 12px; word-break:break-all}
+.obox.active{border-color:var(--blue)}
+.obox.ghost{opacity:.45}
+.obox.ghost .ohead::after{content:"unreferenced → garbage collected"; color:var(--ghost)}
+.obox.pulse{animation:pulse .5s}
+.obox.born{animation:born .4s}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--blue) 55%, transparent)}100%{box-shadow:0 0 0 14px transparent}}
+@keyframes born{from{transform:translateY(8px); opacity:0}to{transform:none; opacity:1}}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media (prefers-reduced-motion: reduce){
+  .obox.pulse,.obox.born,.shake{animation:none}
+  *{transition:none !important}
+}
+
+/* op buttons + verdict + log */
+.ops{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px}
+button.op{
+  font-family:'JetBrains Mono',monospace; font-size:14.5px; cursor:pointer; min-height:44px;
+  padding:9px 14px; border-radius:9px; border:1.5px solid var(--blue);
+  background:var(--paper); color:var(--blue); font-weight:600;
+}
+button.op.warn{border-color:var(--bad); color:var(--bad)}
+button.op.quiet{border-color:var(--line); color:var(--muted); font-weight:400}
+.verdict{margin-top:14px; border-radius:9px; padding:10px 13px; font-size:15px; display:none}
+.verdict.show{display:block}
+.verdict.same{background:var(--good-bg); color:var(--good)}
+.verdict.new{background:var(--amber-bg); color:var(--amber)}
+.verdict.err{background:var(--bad-bg); color:var(--bad)}
+.verdict.info{background:var(--panel2); color:var(--muted); border:1px solid var(--line)}
+.log{
+  margin-top:14px; background:var(--code); color:var(--code-ink); border-radius:10px;
+  font-family:'JetBrains Mono',monospace; font-size:13.5px; line-height:1.65;
+  padding:12px 14px; max-height:190px; overflow:auto;
+}
+.log .lc{color:var(--code-amber)}
+.log .lid{color:#8FB8DB}
+.log .lerr{color:#F0A0A0}
+.log:empty{display:none}
+.tryrow{display:flex; gap:8px; margin-top:14px}
+.tryrow input{
+  flex:1 1 auto; min-width:0; min-height:44px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:14.5px;
+  padding:9px 12px; border-radius:9px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink);
+}
+.tryrow input:focus-visible{outline:3px solid var(--blue); outline-offset:2px}
+.tryhint{margin-top:8px; font-size:13.5px; color:var(--muted)}
+
+/* alias stepper */
+.alias-pick{display:flex; gap:8px; margin-bottom:12px}
+.steps{display:flex; flex-direction:column; gap:8px; margin-top:16px}
+button.step{
+  text-align:left; font-family:'JetBrains Mono',monospace; font-size:14.5px; cursor:pointer;
+  padding:11px 14px; border-radius:9px; border:1.5px solid var(--line);
+  background:var(--paper); color:var(--ink); min-height:44px;
+}
+button.step:disabled{opacity:.45; cursor:default}
+button.step .snote{display:block; font-family:'Space Grotesk',sans-serif; font-size:13px; color:var(--muted)}
+
+/* quiz */
+.qcard{margin-top:12px}
+.qscen{font-size:17px; margin:2px 0 14px}
+.qbtns{display:flex; gap:10px; flex-wrap:wrap}
+button.qa{
+  flex:1 1 180px; min-height:52px; cursor:pointer; font-size:15.5px; font-weight:600;
+  border-radius:10px; padding:10px 14px; font-family:'Space Grotesk',sans-serif;
+}
+button.qa.build{border:1.8px solid var(--blue); background:var(--paper); color:var(--blue)}
+button.qa.share{border:1.8px solid var(--amber-line); background:var(--amber-bg); color:var(--amber)}
+.qfeed{margin-top:12px; border-radius:9px; padding:10px 13px; font-size:15px; display:none}
+.qfeed.show{display:block}
+.qfeed.right{background:var(--good-bg); color:var(--good)}
+.qfeed.wrong{background:var(--bad-bg); color:var(--bad)}
+.qmeta{display:flex; justify-content:space-between; color:var(--muted); font-size:14px; margin-top:12px}
+button.linkish{border:none; background:none; color:var(--blue); font:inherit; cursor:pointer; text-decoration:underline; padding:4px}
+footer{margin-top:48px; color:var(--muted); font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <div class="kicker">Python foundations · Day 2</div>
+  <h1>Mutability Lab</h1>
+  <p class="sub">Every Python object is identity + type + value, and a name is just a movable label. Press the buttons and watch which one changes.</p>
+  <span class="motto">build mutable · share immutable</span>
+</header>
+
+<section aria-labelledby="h-stage">
+  <h2 id="h-stage">1 · The identity experiment</h2>
+  <p class="lede">Pick a type, then run an operation on the name <span class="mono">x</span>. If the arrow jumps to a brand-new box, the type is immutable. If the same box changes, it’s mutable. You can also type your own line and press run.</p>
+
+  <div class="card">
+    <div class="chips" id="chips" role="group" aria-label="Choose a Python type"></div>
+    <div class="stage" id="stage">
+      <svg class="wires" id="wires" aria-hidden="true">
+        <defs>
+          <marker id="arrA" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 Z"></path></marker>
+          <marker id="arrB" class="mb" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 Z"></path></marker>
+        </defs>
+        <path id="wireA" marker-end="url(#arrA)" d=""></path>
+      </svg>
+      <div class="namecol"><div class="nametag" id="nameA">x<span class="nlabel">name</span></div></div>
+      <div class="boxcol" id="boxes"></div>
+    </div>
+    <div class="ops" id="ops"></div>
+    <div class="tryrow">
+      <input id="custom" autocomplete="off" spellcheck="false" placeholder="or type your own line on x…" aria-label="Type your own operation on x">
+      <button class="op" id="runCustom">run</button>
+    </div>
+    <div class="tryhint" id="tryhint"></div>
+    <div class="verdict" id="verdict" role="status"></div>
+    <div class="log mono" id="log" aria-live="polite"></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-alias">
+  <h2 id="h-alias">2 · Two names, one object</h2>
+  <p class="lede">Mutability only bites when an object is shared. Walk the steps in order and watch whether <span class="mono">a</span> sees what happens through <span class="mono">b</span>.</p>
+
+  <div class="card">
+    <div class="alias-pick" role="group" aria-label="Choose the demo type">
+      <button class="chip" id="al-list" aria-pressed="true">list (mutable)</button>
+      <button class="chip" id="al-str" aria-pressed="false">str (immutable)</button>
+    </div>
+    <div class="stage" id="astage">
+      <svg class="wires" id="awires" aria-hidden="true">
+        <path id="awireA" marker-end="url(#arrA)" d=""></path>
+        <path id="awireB" class="wire-b" marker-end="url(#arrB)" d=""></path>
+      </svg>
+      <div class="namecol">
+        <div class="nametag" id="anameA">a<span class="nlabel">name</span></div>
+        <div class="nametag" id="anameB" style="visibility:hidden">b<span class="nlabel">name</span></div>
+      </div>
+      <div class="boxcol" id="aboxes"></div>
+    </div>
+    <div class="steps" id="asteps"></div>
+    <div class="verdict" id="averdict" role="status"></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-cache">
+  <h2 id="h-cache">3 · Does Python reuse values?</h2>
+  <p class="lede">A common guess: “the value 5 already exists, so Python points <span class="mono">y</span> at it.” Walk the steps and see when sharing really happens — and why it is never a lookup by value.</p>
+
+  <div class="card">
+    <div class="chips" id="cchips" role="group" aria-label="Choose a value"></div>
+    <div class="stage" id="cstage">
+      <svg class="wires" aria-hidden="true">
+        <path id="cwireA" marker-end="url(#arrA)" d=""></path>
+        <path id="cwireB" class="wire-b" marker-end="url(#arrB)" d=""></path>
+      </svg>
+      <div class="namecol">
+        <div class="nametag" id="cnameA">x<span class="nlabel">name</span></div>
+        <div class="nametag" id="cnameB" style="visibility:hidden">y<span class="nlabel">name</span></div>
+      </div>
+      <div class="boxcol" id="cboxes"></div>
+    </div>
+    <div class="steps" id="csteps"></div>
+    <div class="verdict" id="cverdict" role="status"></div>
+    <p class="tryhint">As in the interactive Python shell — inside a .py file the compiler may fold equal constants into one object.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-quiz">
+  <h2 id="h-quiz">4 · Build or share?</h2>
+  <p class="lede">For each real-world situation, decide: build it with a mutable type, or share it as an immutable one.</p>
+
+  <div class="card qcard">
+    <p class="qscen" id="qscen"></p>
+    <div class="qbtns">
+      <button class="qa build" id="qbuild">Build it — mutable</button>
+      <button class="qa share" id="qshare">Share it — immutable</button>
+    </div>
+    <div class="qfeed" id="qfeed" role="status"></div>
+    <div class="qmeta">
+      <span id="qprog"></span>
+      <span id="qscore"></span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  The addresses shown are simulated, but they behave exactly like CPython’s <span class="mono">id()</span>: fixed for an object’s lifetime, different for every new object. Run the same experiments in real Python with <span class="mono">id(x)</span>.
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var nextAddr = 0x7f3a2c100040;
+function newAddr(){ nextAddr += 0x40 * (1 + Math.floor(Math.random()*5)); return "0x" + nextAddr.toString(16); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+/* ---------- type configs ---------- */
+function immOps(ops, tryMut){ var o = ops.slice(); if (tryMut) o.push(tryMut); return o; }
+var TYPES = {
+  "int":      {mut:false, init:function(){return 5;}, show:function(v){return String(v);},
+               ops:[ {code:"x += 1", f:function(v){return v+1;}}, {code:"x = x * 2", f:function(v){return v*2;}} ]},
+  "float":    {mut:false, init:function(){return 3.14;}, show:function(v){return String(v);},
+               ops:[ {code:"x += 0.5", f:function(v){return Math.round((v+0.5)*100)/100;}} ]},
+  "bool":     {mut:false, init:function(){return true;}, show:function(v){return v ? "True" : "False";},
+               ops:[ {code:"x = not x", f:function(v){return !v;}} ]},
+  "str":      {mut:false, init:function(){return "hi";}, show:function(v){return '"' + v + '"';},
+               ops:[ {code:'x += "!"', f:function(v){return v + "!";}},
+                     {code:"x = x.upper()", f:function(v){return v.toUpperCase();}},
+                     {code:'x[0] = "H"', err:"TypeError: 'str' object does not support item assignment"} ]},
+  "tuple":    {mut:false, init:function(){return [1,2];}, show:function(v){return "(" + v.join(", ") + ")";},
+               ops:[ {code:"x += (9,)", f:function(v){return v.concat([9]);}},
+                     {code:"x[0] = 99", err:"TypeError: 'tuple' object does not support item assignment"} ]},
+  "frozenset":{mut:false, init:function(){return [1,2];}, show:function(v){return "frozenset({" + v.join(", ") + "})";},
+               ops:[ {code:"x = x | {9}", f:function(v){return v.indexOf(9)<0 ? v.concat([9]) : v;}},
+                     {code:"x.add(9)", err:"AttributeError: 'frozenset' object has no attribute 'add'"} ]},
+  "bytes":    {mut:false, init:function(){return "hi";}, show:function(v){return 'b"' + v + '"';},
+               ops:[ {code:'x += b"!"', f:function(v){return v + "!";}},
+                     {code:"x[0] = 72", err:"TypeError: 'bytes' object does not support item assignment"} ]},
+  "list":     {mut:true, init:function(){return [1,2,3];}, show:function(v){return "[" + v.join(", ") + "]";},
+               ops:[ {code:"x.append(9)", f:function(v){v.push(9); return v;}},
+                     {code:"x[0] = 99", f:function(v){v[0]=99; return v;}},
+                     {code:"x.pop()", f:function(v){if(v.length)v.pop(); return v;}} ]},
+  "dict":     {mut:true, init:function(){return {a:1};}, show:function(v){ var p=[]; for(var k in v){p.push('"'+k+'": '+v[k]);} return "{" + p.join(", ") + "}"; },
+               ops:[ {code:'x["b"] = 2', f:function(v){v.b=2; return v;}},
+                     {code:'x["a"] += 10', f:function(v){v.a+=10; return v;}} ]},
+  "set":      {mut:true, init:function(){return [1,2];}, show:function(v){return v.length ? "{" + v.join(", ") + "}" : "set()";},
+               ops:[ {code:"x.add(9)", f:function(v){if(v.indexOf(9)<0)v.push(9); return v;}},
+                     {code:"x.discard(1)", f:function(v){var i=v.indexOf(1); if(i>-1)v.splice(i,1); return v;}} ]},
+  "bytearray":{mut:true, init:function(){return "hi";}, show:function(v){return 'bytearray(b"' + v + '")';},
+               ops:[ {code:"x.append(33)", f:function(v){return v + "!";}} ]}
+};
+var IMM_ORDER = ["int","float","bool","str","tuple","frozenset","bytes"];
+var MUT_ORDER = ["list","dict","set","bytearray"];
+
+/* ---------- section 1 state ---------- */
+var chipsEl = document.getElementById("chips");
+var boxesEl = document.getElementById("boxes");
+var opsEl = document.getElementById("ops");
+var verdictEl = document.getElementById("verdict");
+var logEl = document.getElementById("log");
+var stageEl = document.getElementById("stage");
+var curType = "int";
+var curBoxes = [];   // {addr, html, state:'active'|'ghost'}
+var curVal = null;
+
+function chipBtn(label, pressed, onClick){
+  var b = document.createElement("button");
+  b.className = "chip"; b.textContent = label;
+  b.setAttribute("aria-pressed", pressed ? "true" : "false");
+  b.addEventListener("click", onClick);
+  return b;
+}
+function buildChips(){
+  chipsEl.innerHTML = "";
+  var g1 = document.createElement("div"); g1.className="chipgrp"; g1.textContent="Immutable family";
+  chipsEl.appendChild(g1);
+  IMM_ORDER.forEach(function(t){ chipsEl.appendChild(chipBtn(t, t===curType, function(){ pickType(t); })); });
+  var g2 = document.createElement("div"); g2.className="chipgrp"; g2.textContent="Mutable family";
+  chipsEl.appendChild(g2);
+  MUT_ORDER.forEach(function(t){ chipsEl.appendChild(chipBtn(t, t===curType, function(){ pickType(t); })); });
+}
+function pickType(t){
+  curType = t;
+  var btns = chipsEl.querySelectorAll("button.chip");
+  for (var i=0;i<btns.length;i++){ btns[i].setAttribute("aria-pressed", btns[i].textContent===t ? "true" : "false"); }
+  resetStage(true);
+}
+function cloneVal(v){
+  if (Array.isArray(v)) return v.slice();
+  if (v && typeof v === "object"){ var o={}; for(var k in v)o[k]=v[k]; return o; }
+  return v;
+}
+function resetStage(clearLog){
+  var cfg = TYPES[curType];
+  curVal = cfg.init();
+  curBoxes = [{addr:newAddr(), state:"active", born:false}];
+  verdictEl.className = "verdict"; verdictEl.textContent = "";
+  if (clearLog) logEl.innerHTML = "";
+  renderBoxes(); buildOps(); setHint();
+  logLine("x = " + cfg.show(curVal), curBoxes[0].addr, null);
+}
+function renderBoxes(){
+  var cfg = TYPES[curType];
+  boxesEl.innerHTML = "";
+  // show newest first? Keep chronological top→down, arrow finds active.
+  var keep = curBoxes.slice(-4);
+  keep.forEach(function(b){
+    var d = document.createElement("div");
+    d.className = "obox " + (b.state==="active" ? "active" : "ghost") + (b.born ? " born" : "");
+    d.dataset.addr = b.addr;
+    d.innerHTML = '<div class="ohead"><span>id: ' + b.addr + '</span><span>type: ' + curType + '</span></div>' +
+                  '<div class="oval">' + esc(b.state==="active" ? cfg.show(curVal) : b.frozen) + '</div>';
+    boxesEl.appendChild(d);
+    b.born = false;
+  });
+  requestAnimationFrame(drawWireA);
+}
+function buildOps(){
+  var cfg = TYPES[curType];
+  opsEl.innerHTML = "";
+  cfg.ops.forEach(function(op){
+    var b = document.createElement("button");
+    b.className = "op" + (op.err ? " warn" : "");
+    b.textContent = op.err ? op.code + "  (try it)" : op.code;
+    b.addEventListener("click", function(){ runOp(op); });
+    opsEl.appendChild(b);
+  });
+  var r = document.createElement("button");
+  r.className = "op quiet"; r.textContent = "reset";
+  r.addEventListener("click", function(){ resetStage(false); });
+  opsEl.appendChild(r);
+}
+function runOp(op){
+  var cfg = TYPES[curType];
+  var act = curBoxes[curBoxes.length-1];
+  if (op.err){
+    var el = boxesEl.querySelector('[data-addr="'+act.addr+'"]');
+    if (el){ el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
+    verdict("err", "Blocked. " + op.err + " — the type offers no door for in-place change.");
+    logLine(op.code, null, op.err);
+    return;
+  }
+  var before = act.addr;
+  if (cfg.mut){
+    curVal = op.f(curVal);
+    renderBoxes();
+    var el2 = boxesEl.querySelector('[data-addr="'+act.addr+'"]');
+    if (el2){ el2.classList.add("pulse"); setTimeout(function(){ el2.classList.remove("pulse"); }, 520); }
+    verdict("same", "Same object changed in place — id unchanged (" + before + "). Mutable.");
+    logLine(op.code, before + "  → id unchanged", null);
+  } else {
+    act.state = "ghost"; act.frozen = cfg.show(curVal);
+    curVal = op.f(cloneVal(curVal));
+    var nb = {addr:newAddr(), state:"active", born:true};
+    curBoxes.push(nb);
+    renderBoxes();
+    verdict("new", "A brand-new object was built and x was rebound — id changed (" + before + " → " + nb.addr + "). Immutable.");
+    logLine(op.code, before + "  → " + nb.addr + "  (new object)", null);
+  }
+}
+function verdict(kind, text){
+  verdictEl.className = "verdict show " + kind;
+  verdictEl.textContent = text;
+}
+function logLine(code, idInfo, err){
+  var row = document.createElement("div");
+  row.innerHTML = '<span class="lc">&gt;&gt;&gt; ' + esc(code) + '</span>' +
+    (idInfo ? '   <span class="lid">id: ' + esc(idInfo) + '</span>' : '') +
+    (err ? '<br><span class="lerr">' + esc(err) + '</span>' : '');
+  logEl.appendChild(row);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function drawWireA(){
+  var act = boxesEl.querySelector(".obox.active");
+  drawWire(document.getElementById("wireA"), document.getElementById("nameA"), act, stageEl);
+}
+function drawWire(path, fromEl, toEl, container){
+  if (!path) return;
+  if (!fromEl || !toEl || fromEl.style.visibility==="hidden"){ path.setAttribute("d",""); return; }
+  var c = container.getBoundingClientRect();
+  var f = fromEl.getBoundingClientRect();
+  var t = toEl.getBoundingClientRect();
+  var x1 = f.right - c.left, y1 = f.top + f.height/2 - c.top;
+  var x2 = t.left - c.left - 4, y2 = t.top + Math.min(t.height/2, 26) - c.top;
+  var mx = (x1 + x2)/2;
+  path.setAttribute("d", "M"+x1+","+y1+" C"+mx+","+y1+" "+mx+","+y2+" "+x2+","+y2);
+}
+
+/* ---------- custom line runner ---------- */
+var customIn = document.getElementById("custom");
+var tryhintEl = document.getElementById("tryhint");
+var HINTS = {
+  "int": "x += 2,  x = x * 3,  x = 10",
+  "float": "x += 0.5,  x = x * 2",
+  "bool": "x = not x,  x = False",
+  "str": "x += \"?\",  x = x.upper(),  x.upper(),  x[0] = \"H\"",
+  "tuple": "x += (7,),  x[0] = 99,  x.append(7)",
+  "frozenset": "x = x | {7},  x.add(7)",
+  "bytes": "x += b\"?\",  x[0] = 72",
+  "list": "x.append(7),  x[1] = 50,  x += [8, 9],  x.sort(),  del x[0]",
+  "dict": "x[\"c\"] = 3,  x.pop(\"a\"),  del x[\"a\"],  x.update({\"z\": 9})",
+  "set": "x.add(7),  x.remove(1),  x |= {8, 9}",
+  "bytearray": "x.append(63),  x[0] = 72"
+};
+function setHint(){ tryhintEl.textContent = "Understands lines like:  " + HINTS[curType]; }
+
+function pNum(s){ s = s.trim();
+  if (/^-?\d+$/.test(s)) return {ok:true, v:parseInt(s,10), isInt:true};
+  if (/^-?\d*\.\d+$/.test(s)) return {ok:true, v:parseFloat(s), isInt:false};
+  return {ok:false}; }
+function pStr(s){ var m = /^"([^"]*)"$/.exec(s.trim()) || /^'([^']*)'$/.exec(s.trim()); return m ? {ok:true, v:m[1]} : {ok:false}; }
+function pBytes(s){ var m = /^b"([^"]*)"$/.exec(s.trim()) || /^b'([^']*)'$/.exec(s.trim()); return m ? {ok:true, v:m[1]} : {ok:false}; }
+function pItems(s, open, close){ s = s.trim();
+  if (s.charAt(0) !== open || s.charAt(s.length-1) !== close) return {ok:false};
+  var inner = s.slice(1,-1).trim();
+  if (inner.charAt(inner.length-1) === ",") inner = inner.slice(0,-1).trim();
+  if (inner === "") return {ok:true, v:[]};
+  var parts = inner.split(","), out = [];
+  for (var i=0;i<parts.length;i++){
+    var n = pNum(parts[i]); if (n.ok){ out.push(n.v); continue; }
+    var st = pStr(parts[i]); if (st.ok){ out.push('"' + st.v + '"'); continue; }
+    return {ok:false};
+  }
+  return {ok:true, v:out}; }
+function pDict(s){ s = s.trim();
+  if (s.charAt(0) !== "{" || s.charAt(s.length-1) !== "}") return {ok:false};
+  var inner = s.slice(1,-1).trim();
+  if (inner === "") return {ok:true, v:{}};
+  var parts = inner.split(","), o = {};
+  for (var i=0;i<parts.length;i++){
+    var kv = parts[i].split(":"); if (kv.length !== 2) return {ok:false};
+    var k = pStr(kv[0]), n = pNum(kv[1]);
+    if (!k.ok || !n.ok) return {ok:false};
+    o[k.v] = n.v;
+  }
+  return {ok:true, v:o}; }
+function normIdx(i, len){ var j = i < 0 ? len + i : i; return (j >= 0 && j < len) ? j : null; }
+function activeAddr(){ return curBoxes[curBoxes.length-1].addr; }
+function applyMut(code){
+  var addr = activeAddr();
+  renderBoxes();
+  var el = boxesEl.querySelector('[data-addr="'+addr+'"]');
+  if (el){ el.classList.add("pulse"); setTimeout(function(){ el.classList.remove("pulse"); }, 520); }
+  verdict("same", "Same object changed in place — id unchanged (" + addr + "). Mutable.");
+  logLine(code, addr + "  → id unchanged", null);
+}
+function applyNew(code, newVal, note){
+  var cfg = TYPES[curType];
+  var act = curBoxes[curBoxes.length-1];
+  var before = act.addr;
+  act.state = "ghost"; act.frozen = cfg.show(curVal);
+  curVal = newVal;
+  var nb = {addr:newAddr(), state:"active", born:true};
+  curBoxes.push(nb);
+  renderBoxes();
+  verdict("new", (note || "A brand-new object was built and x was rebound") + " — id changed (" + before + " → " + nb.addr + ").");
+  logLine(code, before + "  → " + nb.addr + "  (new object)", null);
+}
+function applyErr(code, msg){
+  var el = boxesEl.querySelector('[data-addr="'+activeAddr()+'"]');
+  if (el){ el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
+  verdict("err", "Blocked. " + msg);
+  logLine(code, null, msg);
+}
+function applyNoop(code, msg){
+  verdict("info", msg + " — x untouched, id unchanged (" + activeAddr() + ").");
+  logLine(code, activeAddr() + "  → id unchanged (result thrown away)", null);
+}
+var STR_RET = {upper:function(s){return s.toUpperCase();}, lower:function(s){return s.toLowerCase();},
+               title:function(s){return s.replace(/\b\w/g, function(c){return c.toUpperCase();});},
+               strip:function(s){return s.trim();}};
+function numOp(a, op, b){
+  switch(op){
+    case "+": return a + b;
+    case "-": return a - b;
+    case "*": return a * b;
+    case "**": return Math.pow(a, b);
+    case "%": if (b === 0) return "zde"; return ((a % b) + b) % b;
+    case "//": if (b === 0) return "zde"; return Math.floor(a / b);
+    case "/": if (b === 0) return "zde"; return Math.round((a / b) * 10000) / 10000;
+    default: return null;
+  }
+}
+function repeatStr(s, n){ var out = ""; for (var i=0;i<Math.max(0,n);i++) out += s; return out; }
+function parseLiteral(s, t){
+  var n = pNum(s), st = pStr(s), by = pBytes(s);
+  if (t === "int"){ if (n.ok && n.isInt) return {ok:true, v:n.v}; if (n.ok || st.ok) return {ok:false, wrongType:true}; return {ok:false}; }
+  if (t === "float"){ if (n.ok) return {ok:true, v:n.v}; if (st.ok) return {ok:false, wrongType:true}; return {ok:false}; }
+  if (t === "bool"){ if (s === "True") return {ok:true, v:true}; if (s === "False") return {ok:true, v:false}; if (n.ok || st.ok) return {ok:false, wrongType:true}; return {ok:false}; }
+  if (t === "str"){ if (st.ok) return {ok:true, v:st.v}; if (n.ok || by.ok) return {ok:false, wrongType:true}; return {ok:false}; }
+  if (t === "bytes"){ if (by.ok) return {ok:true, v:by.v}; if (st.ok || n.ok) return {ok:false, wrongType:true}; return {ok:false}; }
+  if (t === "tuple"){ var tt = pItems(s, "(", ")"); if (tt.ok) return {ok:true, v:tt.v}; if (n.ok || st.ok) return {ok:false, wrongType:true}; return {ok:false}; }
+  if (t === "list"){ var ll = pItems(s, "[", "]"); if (ll.ok) return {ok:true, v:ll.v}; if (n.ok || st.ok) return {ok:false, wrongType:true}; return {ok:false}; }
+  if (t === "set"){ var ss2 = pItems(s, "{", "}"); if (ss2.ok) return {ok:true, v:ss2.v}; return {ok:false}; }
+  if (t === "dict"){ var dd = pDict(s); if (dd.ok) return {ok:true, v:dd.v}; return {ok:false}; }
+  return {ok:false};
+}
+function evalLine(line){
+  var t = curType, m;
+  if ((m = /^del\s+x\s*\[(.+)\]\s*$/.exec(line))){
+    if (t === "list"){ var dn = pNum(m[1]); if (!dn.ok) return null;
+      var di = normIdx(dn.v, curVal.length);
+      if (di === null){ applyErr(line, "IndexError: list index out of range"); return true; }
+      curVal.splice(di,1); applyMut(line); return true; }
+    if (t === "dict"){ var dk0 = pStr(m[1]); if (!dk0.ok) return null;
+      if (!(dk0.v in curVal)){ applyErr(line, "KeyError: '" + dk0.v + "'"); return true; }
+      delete curVal[dk0.v]; applyMut(line); return true; }
+    if (t === "bytearray"){ var bn = pNum(m[1]); if (!bn.ok) return null;
+      var bi = normIdx(bn.v, curVal.length);
+      if (bi === null){ applyErr(line, "IndexError: bytearray index out of range"); return true; }
+      curVal = curVal.slice(0,bi) + curVal.slice(bi+1); applyMut(line); return true; }
+    applyErr(line, "TypeError: '" + t + "' object does not support item deletion"); return true;
+  }
+  if ((m = /^x\s*\[(.+?)\]\s*=\s*(.+)$/.exec(line))){
+    if (t === "list"){ var ln = pNum(m[1]); if (!ln.ok) return null;
+      var li = normIdx(ln.v, curVal.length);
+      if (li === null){ applyErr(line, "IndexError: list assignment index out of range"); return true; }
+      var rv = pNum(m[2]), rs = pStr(m[2]);
+      if (rv.ok) curVal[li] = rv.v; else if (rs.ok) curVal[li] = '"' + rs.v + '"'; else return null;
+      applyMut(line); return true; }
+    if (t === "dict"){ var k2 = pStr(m[1]), v2 = pNum(m[2]); if (!k2.ok || !v2.ok) return null;
+      curVal[k2.v] = v2.v; applyMut(line); return true; }
+    if (t === "bytearray"){ var n3 = pNum(m[1]), v3 = pNum(m[2]); if (!n3.ok || !v3.ok) return null;
+      var i3 = normIdx(n3.v, curVal.length);
+      if (i3 === null){ applyErr(line, "IndexError: bytearray index out of range"); return true; }
+      if (v3.v < 0 || v3.v > 255){ applyErr(line, "ValueError: byte must be in range(0, 256)"); return true; }
+      curVal = curVal.slice(0,i3) + String.fromCharCode(v3.v) + curVal.slice(i3+1); applyMut(line); return true; }
+    applyErr(line, "TypeError: '" + t + "' object does not support item assignment"); return true;
+  }
+  if ((m = /^x\.(\w+)\s*\((.*)\)\s*$/.exec(line))){
+    var meth = m[1], arg = m[2];
+    if (t === "list"){
+      if (meth === "append"){ var a1 = pNum(arg), a1s = pStr(arg);
+        if (a1.ok) curVal.push(a1.v); else if (a1s.ok) curVal.push('"' + a1s.v + '"'); else return null;
+        applyMut(line); return true; }
+      if (meth === "pop" && arg.trim() === ""){ if (!curVal.length){ applyErr(line, "IndexError: pop from empty list"); return true; } curVal.pop(); applyMut(line); return true; }
+      if (meth === "remove"){ var r1 = pNum(arg); if (!r1.ok) return null;
+        var ri = curVal.indexOf(r1.v); if (ri < 0){ applyErr(line, "ValueError: list.remove(x): x not in list"); return true; }
+        curVal.splice(ri,1); applyMut(line); return true; }
+      if (meth === "extend"){ var e1 = pItems(arg, "[", "]"); if (!e1.ok) return null;
+        curVal = curVal.concat(e1.v); applyMut(line); return true; }
+      if (meth === "insert"){ var pr = arg.split(","); if (pr.length !== 2) return null;
+        var pi = pNum(pr[0]), pv = pNum(pr[1]); if (!pi.ok || !pv.ok) return null;
+        var ii = Math.max(0, Math.min(curVal.length, pi.v < 0 ? curVal.length + pi.v : pi.v));
+        curVal.splice(ii, 0, pv.v); applyMut(line); return true; }
+      if (meth === "clear" && arg.trim() === ""){ curVal = []; applyMut(line); return true; }
+      if (meth === "sort" && arg.trim() === ""){ curVal.sort(function(a,b){ return (typeof a === "number" && typeof b === "number") ? a - b : String(a).localeCompare(String(b)); }); applyMut(line); return true; }
+      if (meth === "reverse" && arg.trim() === ""){ curVal.reverse(); applyMut(line); return true; }
+      applyErr(line, "AttributeError: 'list' object has no attribute '" + meth + "'"); return true;
+    }
+    if (t === "dict"){
+      if (meth === "pop"){ var dk = pStr(arg); if (!dk.ok) return null;
+        if (!(dk.v in curVal)){ applyErr(line, "KeyError: '" + dk.v + "'"); return true; }
+        delete curVal[dk.v]; applyMut(line); return true; }
+      if (meth === "update"){ var du = pDict(arg); if (!du.ok) return null;
+        for (var duk in du.v){ curVal[duk] = du.v[duk]; } applyMut(line); return true; }
+      if (meth === "clear" && arg.trim() === ""){ curVal = {}; applyMut(line); return true; }
+      applyErr(line, "AttributeError: 'dict' object has no attribute '" + meth + "'"); return true;
+    }
+    if (t === "set"){
+      if (meth === "add"){ var sa = pNum(arg); if (!sa.ok) return null;
+        if (curVal.indexOf(sa.v) < 0) curVal.push(sa.v); applyMut(line); return true; }
+      if (meth === "discard"){ var sd = pNum(arg); if (!sd.ok) return null;
+        var si = curVal.indexOf(sd.v); if (si > -1) curVal.splice(si,1); applyMut(line); return true; }
+      if (meth === "remove"){ var sr = pNum(arg); if (!sr.ok) return null;
+        var sri = curVal.indexOf(sr.v); if (sri < 0){ applyErr(line, "KeyError: " + sr.v); return true; }
+        curVal.splice(sri,1); applyMut(line); return true; }
+      if (meth === "clear" && arg.trim() === ""){ curVal = []; applyMut(line); return true; }
+      applyErr(line, "AttributeError: 'set' object has no attribute '" + meth + "'"); return true;
+    }
+    if (t === "bytearray"){
+      if (meth === "append"){ var ba = pNum(arg); if (!ba.ok) return null;
+        if (ba.v < 0 || ba.v > 255){ applyErr(line, "ValueError: byte must be in range(0, 256)"); return true; }
+        curVal = curVal + String.fromCharCode(ba.v); applyMut(line); return true; }
+      if (meth === "clear" && arg.trim() === ""){ curVal = ""; applyMut(line); return true; }
+      applyErr(line, "AttributeError: 'bytearray' object has no attribute '" + meth + "'"); return true;
+    }
+    if (t === "str" && STR_RET[meth] && arg.trim() === ""){
+      applyNoop(line, "x." + meth + "() built a NEW string and returned it, but nothing caught it");
+      return true;
+    }
+    applyErr(line, "AttributeError: '" + t + "' object has no attribute '" + meth + "'"); return true;
+  }
+  if ((m = /^x\s*(\+|-|\*\*|\*|\/\/|\/|%|\||&|\^)=\s*(.+)$/.exec(line))){
+    var op = m[1], rhs = m[2];
+    if (t === "int" || t === "float"){
+      var rn = pNum(rhs); if (!rn.ok) return null;
+      if (t === "int" && op === "/"){ verdict("info", "In Python, / always returns a float — a different type. This stage keeps one type per experiment; use // for ints, or switch to the float chip."); logLine(line, null, null); return true; }
+      if (t === "int" && !rn.isInt){ verdict("info", "int plus a decimal gives a float — a different type. This stage keeps one type per experiment; switch to the float chip to try it."); logLine(line, null, null); return true; }
+      var nv = numOp(curVal, op, rn.v); if (nv === null) return null;
+      if (nv === "zde"){ applyErr(line, "ZeroDivisionError: division by zero"); return true; }
+      applyNew(line, nv); return true; }
+    if (t === "str" && op === "+"){ var rs2 = pStr(rhs); if (!rs2.ok) return null; applyNew(line, curVal + rs2.v); return true; }
+    if (t === "str" && op === "*"){ var rr = pNum(rhs); if (!rr.ok || !rr.isInt) return null; applyNew(line, repeatStr(curVal, rr.v)); return true; }
+    if (t === "bytes" && op === "+"){ var rb = pBytes(rhs); if (!rb.ok) return null; applyNew(line, curVal + rb.v); return true; }
+    if (t === "tuple" && op === "+"){ var rt = pItems(rhs, "(", ")"); if (!rt.ok) return null; applyNew(line, curVal.concat(rt.v)); return true; }
+    if (t === "list" && op === "+"){ var rl = pItems(rhs, "[", "]"); if (!rl.ok) return null;
+      curVal = curVal.concat(rl.v); applyMut(line);
+      verdict("same", "Surprise: on a list, += mutates IN PLACE (__iadd__) — id unchanged (" + activeAddr() + "). The same += on a tuple builds a new object.");
+      return true; }
+    if (t === "set" && op === "|"){ var rset = pItems(rhs, "{", "}"); if (!rset.ok) return null;
+      for (var ui=0; ui<rset.v.length; ui++){ if (curVal.indexOf(rset.v[ui]) < 0) curVal.push(rset.v[ui]); }
+      applyMut(line); return true; }
+    if (t === "frozenset" && op === "|"){ var rf = pItems(rhs, "{", "}"); if (!rf.ok) return null;
+      var fv = curVal.slice();
+      for (var fi=0; fi<rf.v.length; fi++){ if (fv.indexOf(rf.v[fi]) < 0) fv.push(rf.v[fi]); }
+      applyNew(line, fv, "frozenset has no in-place union, so |= built a new frozenset and rebound x"); return true; }
+    return null;
+  }
+  if ((m = /^x\s*=\s*(.+)$/.exec(line))){
+    var rhs2 = m[1].trim(), mm;
+    if (t === "bool" && rhs2 === "not x"){ applyNew(line, !curVal); return true; }
+    if ((mm = /^x\s*(\+|-|\*\*|\*|\/\/|\/|%)\s*(.+)$/.exec(rhs2))){
+      if (t === "int" || t === "float"){ var rn2 = pNum(mm[2]); if (!rn2.ok) return null;
+        if (t === "int" && mm[1] === "/"){ verdict("info", "In Python, / always returns a float — a different type. This stage keeps one type per experiment; use // for ints, or switch to the float chip."); logLine(line, null, null); return true; }
+        var nv2 = numOp(curVal, mm[1], rn2.v); if (nv2 === null) return null;
+        if (nv2 === "zde"){ applyErr(line, "ZeroDivisionError: division by zero"); return true; }
+        applyNew(line, nv2); return true; }
+      if (t === "str" && mm[1] === "+"){ var rs3 = pStr(mm[2]); if (!rs3.ok) return null; applyNew(line, curVal + rs3.v); return true; }
+      if (t === "str" && mm[1] === "*"){ var rr2 = pNum(mm[2]); if (!rr2.ok || !rr2.isInt) return null; applyNew(line, repeatStr(curVal, rr2.v)); return true; }
+      if (t === "tuple" && mm[1] === "+"){ var rt2 = pItems(mm[2], "(", ")"); if (!rt2.ok) return null; applyNew(line, curVal.concat(rt2.v)); return true; }
+      return null;
+    }
+    if ((mm = /^x\.(\w+)\s*\(\s*\)$/.exec(rhs2))){
+      if (t === "str" && STR_RET[mm[1]]){ applyNew(line, STR_RET[mm[1]](curVal)); return true; }
+      return null;
+    }
+    if ((mm = /^x\s*\|\s*(.+)$/.exec(rhs2))){
+      if (t === "frozenset" || t === "set"){ var ru = pItems(mm[1], "{", "}"); if (!ru.ok) return null;
+        var uv = curVal.slice();
+        for (var u2=0; u2<ru.v.length; u2++){ if (uv.indexOf(ru.v[u2]) < 0) uv.push(ru.v[u2]); }
+        applyNew(line, uv); return true; }
+      return null;
+    }
+    var lit = parseLiteral(rhs2, t);
+    if (lit.ok){ applyNew(line, lit.v, "x was rebound to a fresh literal; the old object is unreferenced"); return true; }
+    if (lit.wrongType){ verdict("info", "That literal looks like a different type — this stage keeps one type per experiment. Pick its chip above to try it."); logLine(line, null, "stage keeps one type — switch chips to change type"); return true; }
+    return null;
+  }
+  return null;
+}
+function runCustom(){
+  var line = customIn.value.trim();
+  if (!line) return;
+  var handled = evalLine(line);
+  if (handled === null){
+    verdict("err", "The lab doesn’t understand that line yet (it isn’t a full Python). Try: " + HINTS[curType]);
+    logLine(line, null, "not understood by this lab — not a Python error");
+  }
+  customIn.value = "";
+  customIn.focus();
+}
+document.getElementById("runCustom").addEventListener("click", runCustom);
+customIn.addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); runCustom(); } });
+
+/* ---------- section 2: aliasing ---------- */
+var A = {
+  type:"list", step:0,
+  boxes:[], aAddr:null, bAddr:null
+};
+var aboxesEl = document.getElementById("aboxes");
+var astepsEl = document.getElementById("asteps");
+var averdictEl = document.getElementById("averdict");
+var astageEl = document.getElementById("astage");
+var SCRIPTS = {
+  list: {
+    initVal:"[1, 2]",
+    steps:[
+      {code:"a = [1, 2]", note:"a points at a new list"},
+      {code:"b = a", note:"no copy — b points at the SAME box"},
+      {code:"b.append(3)", note:"mutate through b…"},
+      {code:"print(a)", note:"what does a see?"}
+    ]
+  },
+  str: {
+    initVal:'"hi"',
+    steps:[
+      {code:'a = "hi"', note:"a points at a new string"},
+      {code:"b = a", note:"no copy — b points at the SAME box"},
+      {code:'b = b + "!"', note:"\u201cchange\u201d through b…"},
+      {code:"print(a)", note:"what does a see?"}
+    ]
+  }
+};
+function aReset(){
+  A.step = 0; A.boxes = []; A.aAddr = null; A.bAddr = null;
+  averdictEl.className = "verdict"; averdictEl.textContent = "";
+  document.getElementById("anameB").style.visibility = "hidden";
+  renderA(); buildASteps();
+}
+function renderA(){
+  aboxesEl.innerHTML = "";
+  A.boxes.forEach(function(b){
+    var d = document.createElement("div");
+    d.className = "obox " + (b.state==="ghost" ? "ghost" : "active") + (b.born ? " born" : "");
+    d.dataset.addr = b.addr;
+    d.innerHTML = '<div class="ohead"><span>id: ' + b.addr + '</span><span>type: ' + A.type + '</span></div>' +
+                  '<div class="oval">' + esc(b.val) + '</div>';
+    aboxesEl.appendChild(d);
+    b.born = false;
+  });
+  requestAnimationFrame(drawAWires);
+}
+function drawAWires(){
+  var pa = document.getElementById("awireA"), pb = document.getElementById("awireB");
+  var na = document.getElementById("anameA"), nb = document.getElementById("anameB");
+  var ba = A.aAddr ? aboxesEl.querySelector('[data-addr="'+A.aAddr+'"]') : null;
+  var bb = A.bAddr ? aboxesEl.querySelector('[data-addr="'+A.bAddr+'"]') : null;
+  drawWire(pa, na, ba, astageEl);
+  if (A.bAddr && nb.style.visibility!=="hidden"){ drawWire(pb, nb, bb, astageEl); } else { pb.setAttribute("d",""); }
+}
+function buildASteps(){
+  var sc = SCRIPTS[A.type];
+  astepsEl.innerHTML = "";
+  sc.steps.forEach(function(s, i){
+    var b = document.createElement("button");
+    b.className = "step";
+    b.innerHTML = esc(s.code) + '<span class="snote">' + esc(s.note) + '</span>';
+    b.disabled = (i !== A.step);
+    b.addEventListener("click", function(){ runAStep(i); });
+    astepsEl.appendChild(b);
+  });
+  var r = document.createElement("button");
+  r.className = "op quiet"; r.textContent = "reset"; r.style.marginTop = "4px";
+  r.addEventListener("click", aReset);
+  astepsEl.appendChild(r);
+}
+function runAStep(i){
+  if (i !== A.step) return;
+  var isList = A.type === "list";
+  if (i === 0){
+    var addr = newAddr();
+    A.boxes = [{addr:addr, val:SCRIPTS[A.type].initVal, state:"active", born:true}];
+    A.aAddr = addr;
+  } else if (i === 1){
+    A.bAddr = A.aAddr;
+    document.getElementById("anameB").style.visibility = "visible";
+  } else if (i === 2){
+    if (isList){
+      A.boxes[0].val = "[1, 2, 3]";
+      renderA();
+      var el = aboxesEl.querySelector('[data-addr="'+A.boxes[0].addr+'"]');
+      if (el){ el.classList.add("pulse"); setTimeout(function(){ el.classList.remove("pulse"); }, 520); }
+      A.step++; buildASteps(); drawAWires(); return;
+    } else {
+      var old = A.boxes[0];
+      var nb2 = {addr:newAddr(), val:'"hi!"', state:"active", born:true};
+      A.boxes.push(nb2);
+      A.bAddr = nb2.addr;   // only b moves
+    }
+  } else if (i === 3){
+    if (isList){
+      showAV("same", "a sees [1, 2, 3] — one shared object, so the change travels. This is the mutable-default-argument trap in disguise.");
+    } else {
+      showAV("new", 'a still sees "hi" — b was rebound to a new string; the original was never touched. Immutables can\u2019t surprise their sharers.');
+    }
+  }
+  A.step++;
+  renderA(); buildASteps();
+}
+function showAV(kind, text){
+  averdictEl.className = "verdict show " + kind;
+  averdictEl.textContent = text;
+}
+document.getElementById("al-list").addEventListener("click", function(){ A.type="list"; setAliasChips(); aReset(); });
+document.getElementById("al-str").addEventListener("click", function(){ A.type="str"; setAliasChips(); aReset(); });
+function setAliasChips(){
+  document.getElementById("al-list").setAttribute("aria-pressed", A.type==="list" ? "true":"false");
+  document.getElementById("al-str").setAttribute("aria-pressed", A.type==="str" ? "true":"false");
+}
+
+/* ---------- section 3: value reuse / caching ---------- */
+var CVALS = [
+  {label:"5", type:"int", shared:true, why:"5 lives in the small-int cache (−5 … 256), so Python hands out the SAME pre-built object."},
+  {label:"256", type:"int", shared:true, why:"256 is the last number inside the small-int cache — still the one shared object."},
+  {label:"257", type:"int", shared:false, why:"257 is past the cache, so each assignment built its own object — no lookup by value ever happened."},
+  {label:"5.0", type:"float", shared:false, why:"Floats are not cached — equal values, two separate objects."},
+  {label:"\"hi\"", type:"str", shared:true, why:"Short identifier-like strings are interned — one shared object."},
+  {label:"[1, 2]", type:"list", shared:false, why:"Lists are NEVER reused — secretly sharing a mutable object would be a disaster the moment one name appended."}
+];
+var C = {idx:0, step:0, boxes:[], xAddr:null, yAddr:null};
+var cboxesEl = document.getElementById("cboxes");
+var cstepsEl = document.getElementById("csteps");
+var cverdictEl = document.getElementById("cverdict");
+var cstageEl = document.getElementById("cstage");
+var cchipsEl = document.getElementById("cchips");
+function buildCChips(){
+  cchipsEl.innerHTML = "";
+  CVALS.forEach(function(cv, i){
+    var b = document.createElement("button");
+    b.className = "chip"; b.textContent = cv.label;
+    b.setAttribute("aria-pressed", i === C.idx ? "true" : "false");
+    b.addEventListener("click", function(){ C.idx = i; buildCChips(); cReset(); });
+    cchipsEl.appendChild(b);
+  });
+}
+function cReset(){
+  C.step = 0; C.boxes = []; C.xAddr = null; C.yAddr = null;
+  cverdictEl.className = "verdict"; cverdictEl.textContent = "";
+  document.getElementById("cnameB").style.visibility = "hidden";
+  renderC(); buildCSteps();
+}
+function renderC(){
+  var cv = CVALS[C.idx];
+  cboxesEl.innerHTML = "";
+  C.boxes.forEach(function(b){
+    var d = document.createElement("div");
+    d.className = "obox active" + (b.born ? " born" : "");
+    d.dataset.addr = b.addr;
+    d.innerHTML = '<div class="ohead"><span>id: ' + b.addr + '</span><span>type: ' + cv.type + '</span></div>' +
+                  '<div class="oval">' + esc(cv.label) + '</div>';
+    cboxesEl.appendChild(d);
+    b.born = false;
+  });
+  requestAnimationFrame(drawCWires);
+}
+function drawCWires(){
+  var pa = document.getElementById("cwireA"), pb = document.getElementById("cwireB");
+  var na = document.getElementById("cnameA"), nb = document.getElementById("cnameB");
+  var ba = C.xAddr ? cboxesEl.querySelector('[data-addr="'+C.xAddr+'"]') : null;
+  var bb = C.yAddr ? cboxesEl.querySelector('[data-addr="'+C.yAddr+'"]') : null;
+  drawWire(pa, na, ba, cstageEl);
+  if (C.yAddr && nb.style.visibility !== "hidden"){ drawWire(pb, nb, bb, cstageEl); } else { pb.setAttribute("d",""); }
+}
+function buildCSteps(){
+  var cv = CVALS[C.idx];
+  var defs = [
+    {code:"x = " + cv.label, note:"first assignment"},
+    {code:"y = " + cv.label, note:"same value, new name — what happens?"},
+    {code:"x == y", note:"compare VALUES"},
+    {code:"x is y", note:"compare IDENTITIES"}
+  ];
+  cstepsEl.innerHTML = "";
+  defs.forEach(function(s, i){
+    var b = document.createElement("button");
+    b.className = "step";
+    b.innerHTML = esc(s.code) + '<span class="snote">' + esc(s.note) + '</span>';
+    b.disabled = (i !== C.step);
+    b.addEventListener("click", function(){ runCStep(i); });
+    cstepsEl.appendChild(b);
+  });
+  var r = document.createElement("button");
+  r.className = "op quiet"; r.textContent = "reset"; r.style.marginTop = "4px";
+  r.addEventListener("click", cReset);
+  cstepsEl.appendChild(r);
+}
+function runCStep(i){
+  if (i !== C.step) return;
+  var cv = CVALS[C.idx];
+  if (i === 0){
+    var ca = newAddr();
+    C.boxes = [{addr:ca, born:true}];
+    C.xAddr = ca;
+  } else if (i === 1){
+    document.getElementById("cnameB").style.visibility = "visible";
+    if (cv.shared){
+      C.yAddr = C.xAddr;
+      showCV("same", "Cache hit: " + cv.why);
+    } else {
+      var cb2 = {addr:newAddr(), born:true};
+      C.boxes.push(cb2);
+      C.yAddr = cb2.addr;
+      showCV("new", "A second object was built. " + cv.why);
+    }
+  } else if (i === 2){
+    showCV("info", "x == y → True. Double-equals compares values, and the values are equal either way.");
+  } else if (i === 3){
+    if (cv.shared){
+      showCV("same", "x is y → True — one shared object (" + C.xAddr + "). Not because Python searched by value, but because this value is pre-built and handed out.");
+    } else {
+      showCV("new", "x is y → False — equal values, two identities (" + C.xAddr + " vs " + C.yAddr + "). Python never searches memory for an existing value.");
+    }
+  }
+  C.step++;
+  renderC(); buildCSteps();
+}
+function showCV(kind, text){
+  cverdictEl.className = "verdict show " + kind;
+  cverdictEl.textContent = text;
+}
+
+/* ---------- section 4: quiz ---------- */
+var QUIZ = [
+  {s:"A GPS coordinate you pass to five different functions.", a:"share", w:"Share it as a tuple — none of the five can surprise the others by changing it."},
+  {s:"Collecting lines one by one while reading a big file.", a:"build", w:"Build with a list — append is cheap and in place; nobody else holds it yet."},
+  {s:"A dict key combining a stock symbol and a date.", a:"share", w:"Keys must be hashable, so an immutable tuple like (\u201cTCS\u201d, \u201c2026-11-11\u201d)."},
+  {s:"A game scoreboard that updates after every round.", a:"build", w:"Genuinely evolving state — a mutable dict is the natural home."},
+  {s:"Counting pizza orders by their topping combination.", a:"share", w:"The combo is unordered and must be a key: frozenset({\u201ccheese\u201d, \u201ccorn\u201d})."},
+  {s:"A shopping cart while the customer is still shopping.", a:"build", w:"You own it and it is accumulating — build it mutable, freeze later if shared."},
+  {s:"Configuration settings read by every thread in a server.", a:"share", w:"Widely shared across threads — immutable means thread-safe by nature."},
+  {s:"A default value for a function argument.", a:"share", w:"The classic trap: a mutable default (def f(x=[])) is shared across every call. Default to immutable (or None)."}
+];
+var qi = 0, qscore = 0, qdone = false;
+var qscenEl = document.getElementById("qscen");
+var qfeedEl = document.getElementById("qfeed");
+var qprogEl = document.getElementById("qprog");
+var qscoreEl = document.getElementById("qscore");
+var qbuildBtn = document.getElementById("qbuild");
+var qshareBtn = document.getElementById("qshare");
+function qRender(){
+  if (qi >= QUIZ.length){
+    qscenEl.textContent = "Done! " + qscore + " / " + QUIZ.length + " — the rule held every time: build mutable, share immutable.";
+    qbuildBtn.style.display = "none"; qshareBtn.style.display = "none";
+    qfeedEl.className = "qfeed"; qfeedEl.innerHTML = "";
+    qprogEl.innerHTML = '<button class="linkish" id="qagain">Play again</button>';
+    qscoreEl.textContent = "";
+    document.getElementById("qagain").addEventListener("click", function(){ qi=0; qscore=0; qbuildBtn.style.display=""; qshareBtn.style.display=""; qRender(); });
+    return;
+  }
+  qscenEl.textContent = QUIZ[qi].s;
+  qfeedEl.className = "qfeed"; qfeedEl.textContent = "";
+  qprogEl.textContent = "Question " + (qi+1) + " of " + QUIZ.length;
+  qscoreEl.textContent = "Score: " + qscore;
+  qbuildBtn.disabled = false; qshareBtn.disabled = false;
+}
+function qAnswer(choice){
+  var q = QUIZ[qi];
+  var right = (choice === q.a);
+  if (right) qscore++;
+  qfeedEl.className = "qfeed show " + (right ? "right" : "wrong");
+  qfeedEl.textContent = (right ? "Correct. " : "Not this time. ") + q.w;
+  qbuildBtn.disabled = true; qshareBtn.disabled = true;
+  qscoreEl.textContent = "Score: " + qscore;
+  setTimeout(function(){ qi++; qRender(); }, 2600);
+}
+qbuildBtn.addEventListener("click", function(){ qAnswer("build"); });
+qshareBtn.addEventListener("click", function(){ qAnswer("share"); });
+
+/* ---------- boot ---------- */
+buildChips();
+resetStage(true);
+setAliasChips();
+aReset();
+buildCChips();
+cReset();
+qRender();
+window.addEventListener("resize", function(){ drawWireA(); drawAWires(); drawCWires(); });
+})();
+</script>
+</body>
+</html>
