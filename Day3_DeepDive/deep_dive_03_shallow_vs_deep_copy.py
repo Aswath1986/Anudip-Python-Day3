@@ -18,7 +18,7 @@ import copy
 # --------------------------------------------------------------------------
 # 1. Shallow copy - new outer list, SAME inner lists
 # --------------------------------------------------------------------------
-original = [[1, 2], [3, 4]]
+original = [[2, 2], [2, 4]]
 shallow = original.copy()
 
 print(shallow is original)          # False -> outer list is new
@@ -44,8 +44,8 @@ print("original:", original)        # [[1, 2], [3, 4]]      <- safe
 # --------------------------------------------------------------------------
 student = {"name": "Ravi", "marks": [70, 80]}
 clone = student.copy()
-clone["name"] = "Sita"              # replacing a value: safe
-clone["marks"].append(90)           # mutating a shared list: NOT safe
+clone["name"] = "Rita"              # replacing a value: safe
+clone["marks"].append(20)           # mutating a shared list: NOT safe
 print(student)                      # {'name': 'Ravi', 'marks': [70, 80, 90]}
 
 # --------------------------------------------------------------------------

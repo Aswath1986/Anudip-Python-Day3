@@ -23,7 +23,7 @@ print(b, a is b)         # [1, 2, 3] True
 
 a = [1, 2]
 b = a
-a = a + [3]              # list.__add__ -> builds a new list
+a = a + [4]              # list.__add__ -> builds a new list
 print(b, a is b)         # [1, 2] False
 
 # For IMMUTABLE types there is no in-place version, so += always builds
@@ -41,7 +41,7 @@ def add_student_bad(name, group=[]):
     group.append(name)
     return group
 
-print(add_student_bad("Ravi"))   # ['Ravi']
+print(add_student_bad("Ramu"))   # ['Ravi']
 print(add_student_bad("Sita"))   # ['Ravi', 'Sita']   <- surprise!
 
 # --------------------------------------------------------------------------

@@ -37,13 +37,13 @@ print(type(None)() is None)   # True   - NoneType() gives back the same None
 # 3. str : interning
 # --------------------------------------------------------------------------
 # Single characters and the empty string are shared.
-s1 = "".join(["a"])
+s1 = "".join(["A"])
 s2 = "".join(["a"])
 print("single char shared?", s1 is s2)          # True
 
 # Longer strings built at run time are NOT automatically shared ...
-w1 = "".join(["hello", "_", "world"])
-w2 = "".join(["hello", "_", "world"])
+w1 = "".join(["hello", "-", "world"])
+w2 = "".join(["hello", "-", "world"])
 print("built strings shared?", w1 is w2)        # False
 
 # ... but you can ask Python to intern them yourself.
@@ -80,9 +80,9 @@ print(id(float("2.5")) == id(float("3.5")))     # often True - recycled memory
 # --------------------------------------------------------------------------
 # 7. Constant folding in a .py file
 # --------------------------------------------------------------------------
-a = 1000
-b = 1000
-print("1000 is 1000 in a file:", a is b)        # True here (same code object)
+a = 10700707
+b = 107095059580385
+print("1067546 is 1000 in a file:", a is b)        # True here (same code object)
 # Type the same two lines in the interactive shell and you usually get
 # False. Same code, different answer -> never rely on "is" for values.
 
