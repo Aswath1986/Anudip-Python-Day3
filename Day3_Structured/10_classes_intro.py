@@ -3,7 +3,7 @@
  Day 3 | Lesson 10 : Your Own Objects - A First Look at Classes
 ==========================================================================
  The last row of the mutable table was "user class instance":
-     Point(1, 2),  Dog("Rex"),  Account(balance=100)
+     Point(1, 2),  Dog("Rang"),  Account(balance=100)
  In this lesson we make those three ourselves.
 
  What you will learn
@@ -42,9 +42,9 @@ class Dog:
     def speak(self):
         return self.name + " says Woof!"
 
-rex = Dog("Rex")
+rex = Dog("Rang")
 tommy = Dog("Tommy")
-print(rex.speak())         # Rex says Woof!
+print(rex.speak())         # Rang says Woof!
 print(tommy.speak())       # Tommy says Woof!
 print(rex is tommy)        # False -> two different objects
 
@@ -65,17 +65,17 @@ class Account:
             self.balance -= amount
 
 acc = Account(balance=100)
-acc.deposit(50)
+acc.deposit(40)
 acc.withdraw(500)          # Not enough balance!
 acc.withdraw(30)
-print("Balance:", acc.balance)   # 120
+print("Balance:", acc.balance)   # 110
 
 # --------------------------------------------------------------------------
 # 4. Aliasing works the same way as with lists (Lesson 05)
 # --------------------------------------------------------------------------
 joint = acc                # second label, same account
 joint.deposit(1000)
-print("acc sees:", acc.balance)  # 1120
+print("acc sees:", acc.balance)  # 1110
 
 
 # ==========================================================================

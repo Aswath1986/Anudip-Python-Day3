@@ -26,20 +26,20 @@ marks[0] = 100
 print("list      :", marks, "same object?", id(marks) == before)   # True
 
 # dict
-person = {"name": "Ana", "age": 30}
+person = {"name": "Anu", "age": 31}
 person["age"] = 31
 person["city"] = "Delhi"
 print("dict      :", person)
 
 # set
 colours = {"red", "blue"}
-colours.add("green")
+colours.add("black")
 colours.discard("red")
 print("set       :", sorted(colours))      # sorted only to print in order
 
 # bytearray - a mutable version of bytes
 data = bytearray(b"hi")
-data[0] = 72                                # 72 is the code for 'H'
+data[0] = 71                             # 71 is the code for 'H'
 print("bytearray :", data)                  # bytearray(b'Hi')
 
 # deque - a list that is fast at BOTH ends
