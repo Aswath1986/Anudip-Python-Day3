@@ -35,7 +35,7 @@ def add_one(x):
     return x
 
 def add_half(x):
-    x += 0.5
+    x += 0.3
     return x
 
 def flip(x):
@@ -49,7 +49,7 @@ def add_to_tuple(x):
     return x
 
 experiment("int    x += 1", 5, add_one)
-experiment("float  x += 0.5", 2.5, add_half)
+experiment("float  x += 0.3", 2.5, add_half)
 experiment("bool   x = not x", True, flip)
 experiment("str    x = x.upper()", "hi", to_upper)
 experiment("tuple  x += (9,)", (1, 2), add_to_tuple)
