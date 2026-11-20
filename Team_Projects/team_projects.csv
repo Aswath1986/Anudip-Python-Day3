@@ -1,0 +1,42 @@
+Project Number,Project Name,Project Statement,Team Size
+P01,Restaurant Bill Splitter,"A group of friends eats at a small hotel. Build a program that takes the order from a fixed menu (idli 40, dosa 70, coffee 25, meals 120), adds 5% GST and a 15% tip, and tells each friend how much to pay.
+F1 Order taker: read items with a while loop and walrus until 'done', reject unknown items, add quantities to an order dict.
+F2 Bill and split: GST, tip, grand total, share per person, whole-rupee share and leftover using // and %.
+Team lead: main.py menu that joins both features.",2
+P02,Number System & Secret Message Toolkit,"A computer-science club wants one tool that converts numbers between bases and hides short messages using character codes.
+F1 Decimal converter: binary, octal and hex (without prefix) plus a table for a range.
+F2 Any base to decimal: check every digit with 'in', then use int(value, base).
+F3 Secret message: Caesar shift for A-Z with ord(), chr() and %, encode and decode.
+Team lead: main.py menu that joins all features.",3
+P03,Student Marks Register,"A class teacher wants to enter marks for each student, see grades and the topper, and hand a final result to the principal that cannot be changed by accident.
+F1 Student class: name, marks list, add_mark (0-100 only), average, grade.
+F2 Register entry: dict of name to Student, no duplicate names, marks entry loop.
+F3 Reports: table, topper, class average, pass count.
+F4 Final result snapshot: tuple of results; show the alias bug and fix it with copy.deepcopy().
+Team lead: main.py menu that joins all features.",4
+P04,Mini Bank with PIN Login,"Extend the Account class from Day 3 into a bank counter program: the customer logs in with a PIN, deposits, withdraws, transfers money and sees a mini statement.
+F1 Account class: deposit, withdraw (with 'Not enough balance!'), history, statement of last 5 entries.
+F2 Secure login: PIN 4321, at most 3 tries with a while loop and walrus, then 'Card blocked'.
+F3 Transfer and joint account: safe transfer between accounts; show that a joint account is the same object (is).
+Team lead: main.py menu that joins all features.",3
+P05,Object Inspector (Mutability Detective),"Build a teaching tool for juniors that proves which Python values are mutable, hashable and truthy, using a fixed list of sample values.
+F1 Inspector table: value, type, mutable?, hashable? (try hash, except TypeError), truthy?
+F2 Experiments: does id() change after += for int and list, == vs is, and the [[0]*3]*3 grid trap with its fix.
+Team lead: main.py menu plus a 5-question mutability quiz.",2
+P06,Attendance & Seating Planner,"A trainer wants to mark attendance, see who is absent, seat the present students in a grid and keep a weekly attendance record. The class roster is a fixed tuple.
+F1 Mark attendance: while loop until 'done', reject names not in the roster and repeated names, return a tuple.
+F2 Absentee report: set difference, sorted absentees, attendance percentage.
+F3 Seating grid: build the nested list correctly and fill seats row by row.
+F4 Weekly record: dict with (day, period) tuple keys; show a list cannot be a key.
+Team lead: main.py menu that joins all features.",4
+P07,Library Book Tracker,"The training centre library wants to track which books are on the shelf and who has borrowed what. A member may hold at most 2 books.
+F1 Book catalogue: Book class, dict of isbn to Book, no duplicates, search by title word.
+F2 Member class bug hunt: show the mutable default argument bug (borrowed=[]) and fix it with None.
+F3 Borrow and return desk: borrow only if the book exists, is available and the limit is not reached; return only borrowed books.
+Team lead: main.py menu that joins all features.",3
+P08,Shopping Cart & Checkout,"Turn the Day 2 shopping bill calculator into a checkout counter: pick products, apply GST and discount rules, and print a receipt.
+F1 Cart builder: dict of product code to quantity, while loop with walrus, reject unknown codes.
+F2 Bill rules: 18% GST, 10% discount if (big order and member) or valid coupon, free shipping for big orders of 10 items or fewer, else Rs 50.
+F3 Coupon check: up to 3 tries, blank means no coupon, case-sensitive match against valid coupons.
+F4 Receipt and order history: aligned receipt; save orders as tuples and fix the cart alias bug with .copy().
+Team lead: main.py menu that joins all features.",4
